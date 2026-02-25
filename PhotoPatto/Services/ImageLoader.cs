@@ -4,10 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
-using PhotoPresenter.Models;
+using PhotoPatto.Models;
 using System.Windows.Media;
 
-namespace PhotoPresenter.Services
+namespace PhotoPatto.Services
 {
     public static class ImageLoader
     {

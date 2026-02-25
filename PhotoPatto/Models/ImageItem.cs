@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows.Media;
 
-namespace PhotoPresenter.Models
+namespace PhotoPatto.Models
 {
     public class ImageItem : INotifyPropertyChanged
     {

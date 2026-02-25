@@ -48,6 +48,10 @@ settings.json
 
 # Windows image file caches
 Thumbs.db
+
+# Distribution files
+publish/
+*.zip
 ehthumbs.db
 
 # Folder config file

@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 
-namespace PhotoPresenter
+namespace PhotoPatto
 {
     /// <summary>
     /// Interaction logic for App.xaml

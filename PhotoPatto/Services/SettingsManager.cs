@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 
-namespace PhotoPresenter.Services
+namespace PhotoPatto.Services
 {
     public class AppSettings
     {

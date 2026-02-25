@@ -9,14 +9,14 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Collections.ObjectModel;
-using PhotoPresenter.Models;
-using PhotoPresenter.Services;
+using PhotoPatto.Models;
+using PhotoPatto.Services;
 using System.Threading.Tasks;
 using System.Linq;
 using WinForms = System.Windows.Forms;
 using System.Windows.Interop;
 
-namespace PhotoPresenter
+namespace PhotoPatto
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

@@ -1,4 +1,4 @@
-<Window x:Class="PhotoPresenter.FullscreenWindow"
+<Window x:Class="PhotoPatto.FullscreenWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="FullscreenWindow"

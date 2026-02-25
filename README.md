@@ -1,12 +1,12 @@
-# PhotoPresenter
+# PhotoPatto
 
 WPF画像プレゼンテーションアプリケーション for .NET 10
 
 ## 概要
 
-PhotoPresenterは、画像をサムネイル一覧で管理し、セカンダリモニターにフルスクリーン表示できるWPFアプリケーションです。プレゼンテーションや展示会での画像表示に最適です。
+PhotoPattoは、画像をサムネイル一覧で管理し、セカンダリモニターにフルスクリーン表示できるWPFアプリケーションです。プレゼンテーションや展示会での画像表示に最適です。
 
-![PhotoPresenter Screenshot](docs/screenshot.png)
+![PhotoPatto Screenshot](docs/screenshot.png)
 
 ## 主な機能
 
@@ -32,7 +32,9 @@ PhotoPresenterは、画像をサムネイル一覧で管理し、セカンダリ
 
 ```bash
 # リポジトリをクローン
-git clone https://github.com/YOUR_USERNAME/PhotoPresenter.git
+git clone https://github.com/iwasakin/PhotoPatto.git
+cd PhotoPatto
+dotnet build
 cd PhotoPresenter
 
 # Visual Studioで開く
