@@ -219,18 +219,18 @@
 
                     <!-- toolbar on top of preview pane: 3 rows -->
                     <StackPanel Grid.Row="0" Orientation="Vertical" HorizontalAlignment="Left" Margin="0,0,0,6">
-                        <!-- Row 1: Display selector -->
+                        <!-- Row 1: Display selector and Show button -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,4">
                             <TextBlock VerticalAlignment="Center" Text="出力先:" Margin="0,0,4,0" />
-                            <ComboBox x:Name="ComboMonitor" Width="200" Style="{StaticResource ModernComboBox}" />
+                            <ComboBox x:Name="ComboMonitor" Width="200" Margin="0,0,6,0" Style="{StaticResource ModernComboBox}" />
+                            <ToggleButton x:Name="BtnShow" Content="Show" Width="100" BorderThickness="3" BorderBrush="#666666" FontWeight="Bold" Style="{StaticResource ModernToggleButton}" />
                         </StackPanel>
-                        <!-- Row 2: Rotation, Black, Show -->
+                        <!-- Row 2: Rotation and Black -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,4">
                             <TextBlock VerticalAlignment="Center" Text="回転:" Margin="0,0,4,0" />
                             <Button x:Name="BtnRotateLeft" Content="↺" Width="40" Margin="0,0,6,0" Style="{StaticResource ModernButton}" />
                             <Button x:Name="BtnRotateRight" Content="↻" Width="40" Margin="0,0,12,0" Style="{StaticResource ModernButton}" />
-                            <ToggleButton x:Name="BtnBlack" Content="Black" Width="70" Margin="0,0,6,0" Style="{StaticResource ModernToggleButton}" />
-                            <ToggleButton x:Name="BtnShow" Content="Show" Width="70" Style="{StaticResource ModernToggleButton}" />
+                            <ToggleButton x:Name="BtnBlack" Content="Black" Width="70" Style="{StaticResource ModernToggleButton}" />
                         </StackPanel>
                         <!-- Row 3: Prev, Next -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
@@ -257,9 +257,6 @@
         <StatusBar Grid.Row="2" Background="#FFFFFF" BorderBrush="#DDDDDD" BorderThickness="0,1,0,0">
             <StatusBarItem>
                 <TextBlock x:Name="TxtStatus" Text="準備完了" />
-            </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
-                <Button x:Name="BtnQuit" Content="Quit" Click="BtnQuit_Click" Style="{StaticResource ModernButton}" />
             </StatusBarItem>
         </StatusBar>
     </Grid>

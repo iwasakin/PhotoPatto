@@ -11,8 +11,8 @@ namespace PhotoPatto.Models
         public string FileName => Path.GetFileName(FilePath);
         public DateTime DateModified { get; }
 
-        private ImageSource _thumbnail;
-        public ImageSource Thumbnail
+        private ImageSource? _thumbnail;
+        public ImageSource? Thumbnail
         {
             get => _thumbnail;
             set { _thumbnail = value; OnPropertyChanged(nameof(Thumbnail)); }

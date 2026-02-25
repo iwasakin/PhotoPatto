@@ -141,11 +141,6 @@ namespace PhotoPatto
             }
         }
 
-        private void BtnQuit_Click(object? sender, RoutedEventArgs e)
-        {
-            System.Windows.Application.Current.Shutdown();
-        }
-
         private async void BtnSelectFolder_Click(object? sender, RoutedEventArgs e)
         {
             using (var dlg = new WinForms.FolderBrowserDialog())
@@ -177,15 +172,19 @@ namespace PhotoPatto
                 // Stream thumbnails one by one for faster display
                 await foreach (var item in ImageLoader.LoadFromFolderStreamAsync(folder))
                 {
-                    _items.Add(item);
-                    count++;
-                    TxtStatus.Text = $"読み込み中... {count} 件";
-
-                    // auto-select first item
-                    if (count == 1)
+                    // Ensure UI updates happen on UI thread
+                    await Dispatcher.InvokeAsync(() =>
                     {
-                        ThumbnailList.SelectedIndex = 0;
-                    }
+                        _items.Add(item);
+                        count++;
+                        TxtStatus.Text = $"読み込み中... {count} 件";
+
+                        // auto-select first item
+                        if (count == 1)
+                        {
+                            ThumbnailList.SelectedIndex = 0;
+                        }
+                    });
                 }
 
                 // apply current sort after all loaded

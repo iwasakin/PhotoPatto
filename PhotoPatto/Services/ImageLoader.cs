@@ -86,14 +86,29 @@ namespace PhotoPatto.Services
 
                         if (o is ushort orientation)
                         {
+                            TransformedBitmap? transformed = null;
                             switch (orientation)
                             {
                                 case 3:
-                                    return new TransformedBitmap(bi, new System.Windows.Media.RotateTransform(180));
+                                    var rt3 = new System.Windows.Media.RotateTransform(180);
+                                    rt3.Freeze();
+                                    transformed = new TransformedBitmap(bi, rt3);
+                                    break;
                                 case 6:
-                                    return new TransformedBitmap(bi, new System.Windows.Media.RotateTransform(90));
+                                    var rt6 = new System.Windows.Media.RotateTransform(90);
+                                    rt6.Freeze();
+                                    transformed = new TransformedBitmap(bi, rt6);
+                                    break;
                                 case 8:
-                                    return new TransformedBitmap(bi, new System.Windows.Media.RotateTransform(270));
+                                    var rt8 = new System.Windows.Media.RotateTransform(270);
+                                    rt8.Freeze();
+                                    transformed = new TransformedBitmap(bi, rt8);
+                                    break;
+                            }
+                            if (transformed != null)
+                            {
+                                transformed.Freeze();
+                                return transformed;
                             }
                         }
                     }
@@ -140,14 +155,29 @@ namespace PhotoPatto.Services
 
                             if (o is ushort orientation)
                             {
+                                TransformedBitmap? transformed = null;
                                 switch (orientation)
                                 {
                                     case 3:
-                                        return new TransformedBitmap(bi, new System.Windows.Media.RotateTransform(180));
+                                        var rt3 = new System.Windows.Media.RotateTransform(180);
+                                        rt3.Freeze();
+                                        transformed = new TransformedBitmap(bi, rt3);
+                                        break;
                                     case 6:
-                                        return new TransformedBitmap(bi, new System.Windows.Media.RotateTransform(90));
+                                        var rt6 = new System.Windows.Media.RotateTransform(90);
+                                        rt6.Freeze();
+                                        transformed = new TransformedBitmap(bi, rt6);
+                                        break;
                                     case 8:
-                                        return new TransformedBitmap(bi, new System.Windows.Media.RotateTransform(270));
+                                        var rt8 = new System.Windows.Media.RotateTransform(270);
+                                        rt8.Freeze();
+                                        transformed = new TransformedBitmap(bi, rt8);
+                                        break;
+                                }
+                                if (transformed != null)
+                                {
+                                    transformed.Freeze();
+                                    return transformed;
                                 }
                             }
                         }
