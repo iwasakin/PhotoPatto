@@ -99,43 +99,8 @@ PhotoPresenter/
 - **マルチモニタ**: Windows Forms interop (`Screen.AllScreens`)
 - **設定永続化**: JSON serialization
 
-## 技術的な特徴
-
-### 高速サムネイル読み込み
-```csharp
-await foreach (var item in ImageLoader.LoadFromFolderStreamAsync(folderPath))
-{
-    _images.Add(item);  // 1枚ずつ表示
-}
-```
-
-### EXIFメタデータ対応
-カメラの回転情報（Orientation Tag 274）を自動的に読み取り、正しい向きで表示
-
-### クロスフェードアニメーション
-2つのImageコントロールを使用した500msのスムーズなトランジション
-
-## 今後の予定
-
-- [ ] 動画対応（MP4, MOV等）
-- [ ] スライドショーモード
-- [ ] お気に入りマーク機能
-- [ ] フォルダ履歴
-- [ ] ズーム機能
-
-詳細は [CHANGELOG.md](Docs/CHANGELOG.md) を参照
-
-## ライセンス
-
-MIT License
-
-## 貢献
-
-プルリクエストを歓迎します！大きな変更の場合は、まずissueで議論してください。
-
 ## 作者
 
-- 開発: [Your Name]
 - バージョン: 1.0.0
 - 更新日: 2025
 
@@ -143,4 +108,3 @@ MIT License
 
 - [ドキュメント](Docs/)
 - [変更履歴](Docs/CHANGELOG.md)
-- [Issue Tracker](https://github.com/YOUR_USERNAME/PhotoPresenter/issues)
