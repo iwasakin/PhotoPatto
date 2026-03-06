@@ -221,7 +221,7 @@
                         <!-- Row 1: Display selector and Show button -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,4">
                             <TextBlock VerticalAlignment="Center" Text="出力先:" Margin="0,0,4,0" />
-                            <ComboBox x:Name="ComboMonitor" Width="200" Margin="0,0,6,0" Style="{StaticResource ModernComboBox}" />
+                            <ComboBox x:Name="ComboMonitor" Width="160" Margin="0,0,6,0" Style="{StaticResource ModernComboBox}" />
                             <ToggleButton x:Name="BtnShow" Content="Show" Width="100" BorderThickness="3" BorderBrush="#666666" FontWeight="Bold" Style="{StaticResource ModernToggleButton}" IsChecked="True" />
                         </StackPanel>
                         <!-- Row 2: Rotation and Black -->
@@ -296,3 +296,4 @@
         </StatusBar>
     </Grid>
 </Window>
+

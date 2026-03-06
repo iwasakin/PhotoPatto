@@ -107,11 +107,13 @@ namespace PhotoPatto
 
         private async void MainWindow_Loaded(object? sender, RoutedEventArgs e)
         {
+            System.Diagnostics.Debug.WriteLine("[MW] MainWindow_Loaded: Start");
             // If Show button is ON by default, create and show fullscreen window (black background until thumbnail is selected)
             if (BtnShow.IsChecked == true)
             {
                 await EnsureFullscreenWindowAsync();
             }
+            System.Diagnostics.Debug.WriteLine("[MW] MainWindow_Loaded: Complete");
         }
 
         private void PopulateMonitors()
@@ -401,27 +403,41 @@ namespace PhotoPatto
         {
             if (ThumbnailList.SelectedItem is ImageItem it)
             {
+                System.Diagnostics.Debug.WriteLine($"[MW] ThumbnailList_SelectionChanged: Start, file={it.FileName}, isVideo={it.IsVideo}, _fsWindow={(_fsWindow == null ? "null" : "exists")}");
                 _currentIndex = ThumbnailList.SelectedIndex;
-                _ = UpdatePreviewAsync(it);
-                // show on fullscreen only if Show button is ON
+
+                // Ensure fullscreen window exists before updating preview (if Show is ON)
                 if (BtnShow.IsChecked == true)
                 {
+                    System.Diagnostics.Debug.WriteLine("[MW] ThumbnailList_SelectionChanged: Show is ON, calling EnsureFullscreenWindowAsync");
                     await EnsureFullscreenWindowAsync();
-                    if (_fsWindow != null && !_fsWindow.IsBlack)
-                    {
-                        _ = _fsWindow.CrossfadeToImageAsync(it.FilePath, it.Rotation, SettingsManager.Settings.FadeMilliseconds);
-                    }
+                    System.Diagnostics.Debug.WriteLine($"[MW] ThumbnailList_SelectionChanged: After EnsureFullscreenWindowAsync, _fsWindow={(_fsWindow == null ? "null" : "exists")}");
                 }
+
+                // Now update preview - _fsWindow will be available for video sync
+                System.Diagnostics.Debug.WriteLine("[MW] ThumbnailList_SelectionChanged: Calling UpdatePreviewAsync");
+                await UpdatePreviewAsync(it);
+                System.Diagnostics.Debug.WriteLine("[MW] ThumbnailList_SelectionChanged: After UpdatePreviewAsync");
+
+                // Update fullscreen display (for images only, videos are handled in UpdatePreviewAsync)
+                if (BtnShow.IsChecked == true && _fsWindow != null && !_fsWindow.IsBlack && !it.IsVideo)
+                {
+                    System.Diagnostics.Debug.WriteLine("[MW] ThumbnailList_SelectionChanged: Calling CrossfadeToImageAsync for image");
+                    _ = _fsWindow.CrossfadeToImageAsync(it.FilePath, it.Rotation, SettingsManager.Settings.FadeMilliseconds);
+                }
+                System.Diagnostics.Debug.WriteLine("[MW] ThumbnailList_SelectionChanged: Complete");
             }
         }
 
         private async Task UpdatePreviewAsync(ImageItem it)
         {
+            System.Diagnostics.Debug.WriteLine($"[MW] UpdatePreviewAsync: Start, file={it.FileName}, isVideo={it.IsVideo}, _fsWindow={(_fsWindow == null ? "null" : "exists")}");
             // Stop any playing video first
             StopVideo();
 
             if (it.IsVideo)
             {
+                System.Diagnostics.Debug.WriteLine("[MW] UpdatePreviewAsync: Video branch");
                 // Show video, hide image
                 await Dispatcher.InvokeAsync(() =>
                 {
@@ -432,18 +448,29 @@ namespace PhotoPatto
                     TxtSelectedFile.Text = "ファイル: " + it.FileName;
 
                     _shouldShowFirstFrame = true;
+                    // Force reload to stabilize first video selection right after startup.
+                    PreviewVideo.Stop();
+                    PreviewVideo.Source = null;
                     PreviewVideo.Source = new Uri(it.FilePath, UriKind.Absolute);
                     // MediaOpenedイベントで最初のフレームが表示される
                 });
+                System.Diagnostics.Debug.WriteLine("[MW] UpdatePreviewAsync: PreviewVideo.Source set");
 
                 // Sync with fullscreen if showing
                 if (_fsWindow != null && BtnShow.IsChecked == true)
                 {
+                    System.Diagnostics.Debug.WriteLine("[MW] UpdatePreviewAsync: Calling LoadVideoAndShowFirstFrameAsync on fullscreen");
                     await _fsWindow.LoadVideoAndShowFirstFrameAsync(it.FilePath);
+                    System.Diagnostics.Debug.WriteLine("[MW] UpdatePreviewAsync: LoadVideoAndShowFirstFrameAsync complete");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[MW] UpdatePreviewAsync: Skipping fullscreen video load (_fsWindow={(_fsWindow == null ? "null" : "exists")}, Show={BtnShow.IsChecked})");
                 }
             }
             else
             {
+                System.Diagnostics.Debug.WriteLine("[MW] UpdatePreviewAsync: Image branch");
                 // Show image, hide video
                 await Dispatcher.InvokeAsync(() =>
                 {
@@ -471,6 +498,7 @@ namespace PhotoPatto
                     // ignore preview load errors
                 }
             }
+            System.Diagnostics.Debug.WriteLine("[MW] UpdatePreviewAsync: Complete");
         }
 
         private void BtnNext_Click(object? sender, RoutedEventArgs e)
@@ -702,3 +730,4 @@ namespace PhotoPatto
         }
     }
 }
+

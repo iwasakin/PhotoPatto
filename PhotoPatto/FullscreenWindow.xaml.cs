@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,7 +28,7 @@ namespace PhotoPatto
                 BlackOverlay.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
                 if (value)
                 {
-                    // 動画準備中でない場合のみ停止・削除
+                    // 蜍慕判貅門ｙ荳ｭ縺ｧ縺ｪ縺・ｴ蜷医・縺ｿ蛛懈ｭ｢繝ｻ蜑企勁
                     if (FullscreenVideo.Source != null && !_shouldShowFirstFrame)
                     {
                         FullscreenVideo.Stop();
@@ -50,14 +50,14 @@ namespace PhotoPatto
         {
             System.Diagnostics.Debug.WriteLine($"[FS] MediaOpened: _shouldShowFirstFrame={_shouldShowFirstFrame}, _pendingPlay={_pendingPlay}");
 
-            // フラグがセットされていたら最初のフレームを表示
+            // 繝輔Λ繧ｰ縺後そ繝・ヨ縺輔ｌ縺ｦ縺・◆繧画怙蛻昴・繝輔Ξ繝ｼ繝繧定｡ｨ遉ｺ
             if (_shouldShowFirstFrame)
             {
-                // 元々の黒画面状態を保存
+                // 蜈・・・鮟堤判髱｢迥ｶ諷九ｒ菫晏ｭ・
                 bool wasBlack = BlackOverlay.Visibility == Visibility.Visible;
                 System.Diagnostics.Debug.WriteLine($"[FS] MediaOpened: wasBlack={wasBlack}, BlackOverlay.Visibility={BlackOverlay.Visibility}");
 
-                // デコーダー初期化のため一時的に黒画面にする（元々黒くなければ）
+                // 繝・さ繝ｼ繝繝ｼ蛻晄悄蛹悶・縺溘ａ荳譎ら噪縺ｫ鮟堤判髱｢縺ｫ縺吶ｋ・亥・縲・ｻ偵￥縺ｪ縺代ｌ縺ｰ・・
                 if (!wasBlack)
                 {
                     System.Diagnostics.Debug.WriteLine("[FS] MediaOpened: Setting BlackOverlay to Visible");
@@ -68,15 +68,15 @@ namespace PhotoPatto
                 FullscreenVideo.Play();
                 System.Diagnostics.Debug.WriteLine("[FS] MediaOpened: Started Play, waiting 100ms...");
 
-                // デコーダー初期化のため100ms待つ
+                // 繝・さ繝ｼ繝繝ｼ蛻晄悄蛹悶・縺溘ａ100ms蠕・▽
                 await Task.Delay(100);
 
                 FullscreenVideo.Pause();
                 FullscreenVideo.Position = TimeSpan.Zero;
                 System.Diagnostics.Debug.WriteLine("[FS] MediaOpened: Paused, waiting 100ms...");
-                await Task.Delay(100); // Position設定後に待機
+                await Task.Delay(100); // Position險ｭ螳壼ｾ後↓蠕・ｩ・
 
-                // 元々黒画面でなかった場合のみ非表示に戻す
+                // 蜈・・ｻ堤判髱｢縺ｧ縺ｪ縺九▲縺溷ｴ蜷医・縺ｿ髱櫁｡ｨ遉ｺ縺ｫ謌ｻ縺・
                 if (!wasBlack)
                 {
                     System.Diagnostics.Debug.WriteLine("[FS] MediaOpened: Setting BlackOverlay to Collapsed");
@@ -88,7 +88,7 @@ namespace PhotoPatto
                 System.Diagnostics.Debug.WriteLine($"[FS] MediaOpened: Complete, FullscreenVideo.Visibility={FullscreenVideo.Visibility}, ImgA.Visibility={ImgA.Visibility}, ImgB.Visibility={ImgB.Visibility}");
             }
 
-            // 保留中の再生があれば開始
+            // 菫晉蕗荳ｭ縺ｮ蜀咲函縺後≠繧後・髢句ｧ・
             if (_pendingPlay)
             {
                 System.Diagnostics.Debug.WriteLine("[FS] MediaOpened: Starting pending play");
@@ -148,27 +148,6 @@ namespace PhotoPatto
             this.Show();
             await tcs.Task;
 
-            // Wait for MediaElement to be fully loaded
-            System.Diagnostics.Debug.WriteLine($"[FS] ShowOnMonitorAsync: FullscreenVideo.IsLoaded={FullscreenVideo.IsLoaded}");
-            if (!FullscreenVideo.IsLoaded)
-            {
-                System.Diagnostics.Debug.WriteLine("[FS] ShowOnMonitorAsync: Waiting for FullscreenVideo.Loaded...");
-                var mediaTcs = new TaskCompletionSource<bool>();
-                RoutedEventHandler? mediaHandler = null;
-                mediaHandler = (s, e) =>
-                {
-                    System.Diagnostics.Debug.WriteLine("[FS] ShowOnMonitorAsync: FullscreenVideo.Loaded fired");
-                    FullscreenVideo.Loaded -= mediaHandler;
-                    mediaTcs.TrySetResult(true);
-                };
-                FullscreenVideo.Loaded += mediaHandler;
-                await mediaTcs.Task;
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("[FS] ShowOnMonitorAsync: FullscreenVideo already loaded");
-            }
-
             System.Diagnostics.Debug.WriteLine("[FS] ShowOnMonitorAsync: Complete");
         }
 
@@ -178,7 +157,7 @@ namespace PhotoPatto
             var isVideo = _videoExtensions.Contains(ext);
             System.Diagnostics.Debug.WriteLine($"[FS] CrossfadeToImageAsync: {System.IO.Path.GetFileName(filePath)}, isVideo={isVideo}, IsBlack={IsBlack}");
 
-            // 動画以外で黒画面の場合は変更を無視
+            // 蜍慕判莉･螟悶〒鮟堤判髱｢縺ｮ蝣ｴ蜷医・螟画峩繧堤┌隕・
             if (IsBlack && !isVideo)
             {
                 System.Diagnostics.Debug.WriteLine("[FS] CrossfadeToImageAsync: Skipping (IsBlack && !isVideo)");
@@ -249,22 +228,41 @@ namespace PhotoPatto
                 ImgA.Visibility = Visibility.Collapsed;
                 ImgB.Visibility = Visibility.Collapsed;
                 FullscreenVideo.Visibility = Visibility.Visible;
+                FullscreenVideo.Opacity = 1;
 
                 _shouldShowFirstFrame = true;
                 _pendingPlay = false;
-                System.Diagnostics.Debug.WriteLine($"[FS] LoadVideoAndShowFirstFrameAsync: Visibility set, yielding to Dispatcher...");
+                System.Diagnostics.Debug.WriteLine($"[FS] LoadVideoAndShowFirstFrameAsync: Visibility set, waiting for Loaded...");
             });
 
-            // Visibility変更をUIスレッドに処理させる
-            await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.Render);
-            System.Diagnostics.Debug.WriteLine($"[FS] LoadVideoAndShowFirstFrameAsync: Dispatcher yielded, setting Source...");
-
-            await Dispatcher.InvokeAsync(() =>
+            // Loaded繧､繝吶Φ繝亥ｾ・ｩ・
+            await Dispatcher.InvokeAsync(async () =>
             {
-                FullscreenVideo.Source = new Uri(filePath, UriKind.Absolute);
-                System.Diagnostics.Debug.WriteLine($"[FS] LoadVideoAndShowFirstFrameAsync: FullscreenVideo.Visibility={FullscreenVideo.Visibility}, ImgA.Visibility={ImgA.Visibility}, ImgB.Visibility={ImgB.Visibility}");
-                // MediaOpenedイベントで最初のフレームが表示される
-            });
+                if (FullscreenVideo.IsLoaded)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[FS] LoadVideoAndShowFirstFrameAsync: FullscreenVideo already loaded, setting Source...");
+                    // Force reload to avoid missing the first MediaOpened after startup.
+                    FullscreenVideo.Stop();
+                    FullscreenVideo.Source = null;
+                    FullscreenVideo.Source = new Uri(filePath, UriKind.Absolute);
+                    System.Diagnostics.Debug.WriteLine($"[FS] LoadVideoAndShowFirstFrameAsync: Source set (IsLoaded), FullscreenVideo.Visibility={FullscreenVideo.Visibility}, ImgA.Visibility={ImgA.Visibility}, ImgB.Visibility={ImgB.Visibility}");
+                }
+                else
+                {
+                    RoutedEventHandler? loadedHandler = null;
+                    loadedHandler = (s, e) =>
+                    {
+                        FullscreenVideo.Loaded -= loadedHandler;
+                        System.Diagnostics.Debug.WriteLine($"[FS] LoadVideoAndShowFirstFrameAsync: FullscreenVideo Loaded event fired, setting Source...");
+                        // Force reload to avoid missing the first MediaOpened after startup.
+                        FullscreenVideo.Stop();
+                        FullscreenVideo.Source = null;
+                        FullscreenVideo.Source = new Uri(filePath, UriKind.Absolute);
+                        System.Diagnostics.Debug.WriteLine($"[FS] LoadVideoAndShowFirstFrameAsync: Source set (Loaded event), FullscreenVideo.Visibility={FullscreenVideo.Visibility}, ImgA.Visibility={ImgA.Visibility}, ImgB.Visibility={ImgB.Visibility}");
+                    };
+                    FullscreenVideo.Loaded += loadedHandler;
+                }
+            }, System.Windows.Threading.DispatcherPriority.Loaded);
         }
 
         public void LoadVideo(string filePath)
@@ -288,12 +286,12 @@ namespace PhotoPatto
                 {
                     if (FullscreenVideo.NaturalDuration.HasTimeSpan)
                     {
-                        // 準備完了済み
+                        // 貅門ｙ螳御ｺ・ｸ医∩
                         FullscreenVideo.Play();
                     }
                     else
                     {
-                        // まだ準備中、保留
+                        // 縺ｾ縺貅門ｙ荳ｭ縲∽ｿ晉蕗
                         _pendingPlay = true;
                     }
                 }
@@ -338,3 +336,4 @@ namespace PhotoPatto
         }
     }
 }
+
