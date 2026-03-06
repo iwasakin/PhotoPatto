@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 using System.Linq;
 using WinForms = System.Windows.Forms;
 using System.Windows.Interop;
+using System.Windows.Threading;
+using System;
 
 namespace PhotoPatto
 {
@@ -26,6 +28,9 @@ namespace PhotoPatto
         private ObservableCollection<ImageItem> _items = new ObservableCollection<ImageItem>();
         private int _currentIndex = -1;
         private FullscreenWindow? _fsWindow;
+        private DispatcherTimer? _videoTimer;
+        private bool _isVideoSeeking = false;
+        private bool _shouldShowFirstFrame = false;
 
         public MainWindow()
         {
@@ -53,6 +58,21 @@ namespace PhotoPatto
             BtnSortOrder.Click += BtnSortOrder_Click;
             ComboMonitor.SelectionChanged += ComboMonitor_SelectionChanged;
             this.Closing += MainWindow_Closing;
+
+            // Video controls
+            BtnPlayPause.Checked += BtnPlayPause_CheckedChanged;
+            BtnPlayPause.Unchecked += BtnPlayPause_CheckedChanged;
+            BtnStop.Click += BtnStop_Click;
+            BtnLoop.Checked += BtnLoop_CheckedChanged;
+            BtnLoop.Unchecked += BtnLoop_CheckedChanged;
+            VideoSeekBar.ValueChanged += VideoSeekBar_ValueChanged;
+            PreviewVideo.MediaOpened += PreviewVideo_MediaOpened;
+            PreviewVideo.MediaEnded += PreviewVideo_MediaEnded;
+
+            // Video timer for updating seek bar
+            _videoTimer = new DispatcherTimer();
+            _videoTimer.Interval = TimeSpan.FromMilliseconds(100);
+            _videoTimer.Tick += VideoTimer_Tick;
 
             // if last folder exists, load it
             if (!string.IsNullOrEmpty(SettingsManager.Settings.LastFolder) && System.IO.Directory.Exists(SettingsManager.Settings.LastFolder))
@@ -82,6 +102,15 @@ namespace PhotoPatto
             }
             catch
             {
+            }
+        }
+
+        private async void MainWindow_Loaded(object? sender, RoutedEventArgs e)
+        {
+            // If Show button is ON by default, create and show fullscreen window (black background until thumbnail is selected)
+            if (BtnShow.IsChecked == true)
+            {
+                await EnsureFullscreenWindowAsync();
             }
         }
 
@@ -178,12 +207,6 @@ namespace PhotoPatto
                         _items.Add(item);
                         count++;
                         TxtStatus.Text = $"読み込み中... {count} 件";
-
-                        // auto-select first item
-                        if (count == 1)
-                        {
-                            ThumbnailList.SelectedIndex = 0;
-                        }
                     });
                 }
 
@@ -204,7 +227,7 @@ namespace PhotoPatto
             ApplySort();
         }
 
-        private void ComboMonitor_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        private async void ComboMonitor_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
             // If Show is ON and fullscreen window exists, move it to the new monitor immediately
             if (BtnShow.IsChecked == true && _fsWindow != null)
@@ -215,7 +238,7 @@ namespace PhotoPatto
                     int idx = ComboMonitor.SelectedIndex >= 0 ? ComboMonitor.SelectedIndex : 0;
                     if (idx >= 0 && idx < screens.Length)
                     {
-                        _fsWindow.ShowOnMonitor(idx);
+                        await _fsWindow.ShowOnMonitorAsync(idx);
                     }
                 }
                 catch
@@ -262,7 +285,7 @@ namespace PhotoPatto
             }
         }
 
-        private void EnsureFullscreenWindow()
+        private async Task EnsureFullscreenWindowAsync()
         {
             try
             {
@@ -284,11 +307,20 @@ namespace PhotoPatto
                         else
                             BtnPrev_Click(this, new RoutedEventArgs());
                     };
+                    // wire up video started callback for synchronization
+                    _fsWindow.OnVideoStarted = () =>
+                    {
+                        Dispatcher.InvokeAsync(() =>
+                        {
+                            PreviewVideo.Play();
+                            _videoTimer?.Start();
+                        }, System.Windows.Threading.DispatcherPriority.Background);
+                    };
                 }
 
                 int idx = ComboMonitor.SelectedIndex >= 0 ? ComboMonitor.SelectedIndex : 0;
                 if (idx >= screens.Length) idx = 0;
-                _fsWindow.ShowOnMonitor(idx);
+                await _fsWindow.ShowOnMonitorAsync(idx);
             }
             catch
             {
@@ -301,7 +333,7 @@ namespace PhotoPatto
             // only if Show is ON
             if (BtnShow.IsChecked != true) return;
 
-            EnsureFullscreenWindow();
+            await EnsureFullscreenWindowAsync();
             if (_fsWindow != null)
             {
                 _fsWindow.IsBlack = true;
@@ -317,15 +349,21 @@ namespace PhotoPatto
                 if (_currentIndex >= 0 && _currentIndex < _items.Count)
                 {
                     var it = _items[_currentIndex];
-                    _ = _fsWindow.CrossfadeToImageAsync(it.FilePath, it.Rotation, SettingsManager.Settings.FadeMilliseconds);
+
+                    // 動画で既にロード済みの場合は BlackOverlay だけ非表示になっている
+                    // CrossfadeToImageAsync を呼んでも MediaOpened が発火しない可能性があるため不要
+                    if (!it.IsVideo || !_fsWindow.IsVideoReady)
+                    {
+                        _ = _fsWindow.CrossfadeToImageAsync(it.FilePath, it.Rotation, SettingsManager.Settings.FadeMilliseconds);
+                    }
                 }
             }
         }
 
-        private void BtnShow_Checked(object? sender, RoutedEventArgs e)
+        private async void BtnShow_Checked(object? sender, RoutedEventArgs e)
         {
-            // Show fullscreen window
-            EnsureFullscreenWindow();
+            // Show fullscreen window and wait for it to be fully rendered
+            await EnsureFullscreenWindowAsync();
 
             // display current image if available
             if (_fsWindow != null && _currentIndex >= 0 && _currentIndex < _items.Count)
@@ -333,6 +371,13 @@ namespace PhotoPatto
                 var it = _items[_currentIndex];
                 if (BtnBlack.IsChecked == true)
                 {
+                    // 動画の場合は先にロードしてから Black にする
+                    if (it.IsVideo)
+                    {
+                        await _fsWindow.LoadVideoAndShowFirstFrameAsync(it.FilePath);
+                        // 少し待ってから Black を設定
+                        await Task.Delay(50);
+                    }
                     _fsWindow.IsBlack = true;
                 }
                 else
@@ -352,7 +397,7 @@ namespace PhotoPatto
             }
         }
 
-        private void ThumbnailList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        private async void ThumbnailList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
             if (ThumbnailList.SelectedItem is ImageItem it)
             {
@@ -361,7 +406,7 @@ namespace PhotoPatto
                 // show on fullscreen only if Show button is ON
                 if (BtnShow.IsChecked == true)
                 {
-                    EnsureFullscreenWindow();
+                    await EnsureFullscreenWindowAsync();
                     if (_fsWindow != null && !_fsWindow.IsBlack)
                     {
                         _ = _fsWindow.CrossfadeToImageAsync(it.FilePath, it.Rotation, SettingsManager.Settings.FadeMilliseconds);
@@ -372,26 +417,59 @@ namespace PhotoPatto
 
         private async Task UpdatePreviewAsync(ImageItem it)
         {
-            // quick show thumbnail first
-            await Dispatcher.InvokeAsync(() =>
-            {
-                PreviewImage.Source = it.Thumbnail;
-                PreviewImage.LayoutTransform = new RotateTransform(it.Rotation);
-                TxtSelectedFile.Text = "ファイル: " + it.FileName;
-            });
+            // Stop any playing video first
+            StopVideo();
 
-            try
+            if (it.IsVideo)
             {
-                var preview = await ImageLoader.LoadPreviewAsync(it.FilePath, 1600, 1200);
+                // Show video, hide image
                 await Dispatcher.InvokeAsync(() =>
                 {
-                    PreviewImage.Source = preview;
-                    PreviewImage.LayoutTransform = new RotateTransform(it.Rotation);
+                    ImageViewbox.Visibility = Visibility.Collapsed;
+                    PreviewVideo.Visibility = Visibility.Visible;
+                    VideoControlsPanel.Visibility = Visibility.Visible;
+                    TxtSelectedFile.Visibility = Visibility.Visible;
+                    TxtSelectedFile.Text = "ファイル: " + it.FileName;
+
+                    _shouldShowFirstFrame = true;
+                    PreviewVideo.Source = new Uri(it.FilePath, UriKind.Absolute);
+                    // MediaOpenedイベントで最初のフレームが表示される
                 });
+
+                // Sync with fullscreen if showing
+                if (_fsWindow != null && BtnShow.IsChecked == true)
+                {
+                    await _fsWindow.LoadVideoAndShowFirstFrameAsync(it.FilePath);
+                }
             }
-            catch
+            else
             {
-                // ignore preview load errors
+                // Show image, hide video
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    ImageViewbox.Visibility = Visibility.Visible;
+                    PreviewVideo.Visibility = Visibility.Collapsed;
+                    VideoControlsPanel.Visibility = Visibility.Collapsed;
+                    TxtSelectedFile.Visibility = Visibility.Visible;
+
+                    PreviewImage.Source = it.Thumbnail;
+                    PreviewImage.LayoutTransform = new RotateTransform(it.Rotation);
+                    TxtSelectedFile.Text = "ファイル: " + it.FileName;
+                });
+
+                try
+                {
+                    var preview = await ImageLoader.LoadPreviewAsync(it.FilePath, 1600, 1200);
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        PreviewImage.Source = preview;
+                        PreviewImage.LayoutTransform = new RotateTransform(it.Rotation);
+                    });
+                }
+                catch
+                {
+                    // ignore preview load errors
+                }
             }
         }
 
@@ -455,6 +533,172 @@ namespace PhotoPatto
                 BtnPrev_Click(this, new RoutedEventArgs());
                 e.Handled = true;
             }
+        }
+
+        // Video control methods
+        private void BtnPlayPause_CheckedChanged(object? sender, RoutedEventArgs e)
+        {
+            if (PreviewVideo.Source == null) return;
+
+            if (BtnPlayPause.IsChecked == true)
+            {
+                // 再生開始 - アイコンを一時停止に切り替え
+                PlayIcon.Visibility = Visibility.Collapsed;
+                PauseIcon.Visibility = Visibility.Visible;
+
+                // Fullscreenを先に再生（観客向けをスムーズに）
+                if (_fsWindow != null && BtnShow.IsChecked == true && BtnBlack.IsChecked != true)
+                {
+                    _fsWindow.PlayVideo();
+                    // OnVideoStartedコールバックでPreviewVideoが再生される
+                    // ただし、既に準備完了済みの場合はコールバックが呼ばれないので、その場合はここで再生
+                    if (_fsWindow.IsVideoReady)
+                    {
+                        PreviewVideo.Play();
+                        _videoTimer?.Start();
+                    }
+                }
+                else
+                {
+                    // Fullscreenなしの場合は即座に再生
+                    PreviewVideo.Play();
+                    _videoTimer?.Start();
+                }
+            }
+            else
+            {
+                // 一時停止 - アイコンを再生に切り替え
+                PlayIcon.Visibility = Visibility.Visible;
+                PauseIcon.Visibility = Visibility.Collapsed;
+
+                PreviewVideo.Pause();
+                _videoTimer?.Stop();
+
+                // Sync with fullscreen
+                if (_fsWindow != null && BtnShow.IsChecked == true && BtnBlack.IsChecked != true)
+                {
+                    _fsWindow.PauseVideo();
+                }
+            }
+        }
+
+        private void BtnStop_Click(object? sender, RoutedEventArgs e)
+        {
+            StopVideo();
+
+            // 停止時はボタンを再生状態に戻す
+            BtnPlayPause.IsChecked = false;
+        }
+
+        private void BtnLoop_CheckedChanged(object? sender, RoutedEventArgs e)
+        {
+            // Loop state changed - will be checked in MediaEnded event
+        }
+
+        private void StopVideo()
+        {
+            if (PreviewVideo.Source != null)
+            {
+                PreviewVideo.Position = TimeSpan.Zero;
+                PreviewVideo.Play();
+                PreviewVideo.Pause();
+                _videoTimer?.Stop();
+
+                // Reset seek bar and time display
+                _isVideoSeeking = true;
+                VideoSeekBar.Value = 0;
+                TxtCurrentTime.Text = "00:00";
+                _isVideoSeeking = false;
+
+                // Sync with fullscreen
+                if (_fsWindow != null && BtnShow.IsChecked == true && BtnBlack.IsChecked != true)
+                {
+                    _fsWindow.StopVideo();
+                }
+            }
+        }
+
+        private void VideoSeekBar_ValueChanged(object? sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_isVideoSeeking || PreviewVideo.Source == null || !PreviewVideo.NaturalDuration.HasTimeSpan)
+                return;
+
+            _isVideoSeeking = true;
+            var totalSeconds = PreviewVideo.NaturalDuration.TimeSpan.TotalSeconds;
+            var newPosition = TimeSpan.FromSeconds(totalSeconds * (VideoSeekBar.Value / 100.0));
+            PreviewVideo.Position = newPosition;
+
+            // Sync position with fullscreen
+            if (_fsWindow != null && BtnShow.IsChecked == true && BtnBlack.IsChecked != true)
+            {
+                _fsWindow.SeekVideo(newPosition);
+            }
+
+            _isVideoSeeking = false;
+        }
+
+        private void PreviewVideo_MediaOpened(object? sender, RoutedEventArgs e)
+        {
+            if (PreviewVideo.NaturalDuration.HasTimeSpan)
+            {
+                TxtTotalTime.Text = FormatTime(PreviewVideo.NaturalDuration.TimeSpan);
+            }
+
+            // フラグがセットされていたら最初のフレームを表示
+            if (_shouldShowFirstFrame)
+            {
+                PreviewVideo.Position = TimeSpan.Zero;
+                PreviewVideo.Play();
+                PreviewVideo.Pause();
+                _shouldShowFirstFrame = false;
+            }
+        }
+
+        private void PreviewVideo_MediaEnded(object? sender, RoutedEventArgs e)
+        {
+            // Check if loop is enabled
+            if (BtnLoop.IsChecked == true)
+            {
+                PreviewVideo.Position = TimeSpan.Zero;
+                PreviewVideo.Play();
+
+                // Sync with fullscreen
+                if (_fsWindow != null && BtnShow.IsChecked == true && BtnBlack.IsChecked != true)
+                {
+                    _fsWindow.SeekVideo(TimeSpan.Zero);
+                    _fsWindow.PlayVideo();
+                }
+
+                // ループ再生時はボタンを再生中状態に保つ
+                BtnPlayPause.IsChecked = true;
+            }
+            else
+            {
+                StopVideo();
+
+                // 動画終了時はボタンを再生状態に戻す
+                BtnPlayPause.IsChecked = false;
+            }
+        }
+
+        private void VideoTimer_Tick(object? sender, EventArgs e)
+        {
+            if (PreviewVideo.Source == null || !PreviewVideo.NaturalDuration.HasTimeSpan)
+                return;
+
+            _isVideoSeeking = true;
+            var totalSeconds = PreviewVideo.NaturalDuration.TimeSpan.TotalSeconds;
+            if (totalSeconds > 0)
+            {
+                VideoSeekBar.Value = (PreviewVideo.Position.TotalSeconds / totalSeconds) * 100.0;
+            }
+            TxtCurrentTime.Text = FormatTime(PreviewVideo.Position);
+            _isVideoSeeking = false;
+        }
+
+        private string FormatTime(TimeSpan time)
+        {
+            return $"{(int)time.TotalMinutes:D2}:{time.Seconds:D2}";
         }
     }
 }

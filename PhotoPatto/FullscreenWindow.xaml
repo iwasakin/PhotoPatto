@@ -13,6 +13,11 @@
         <Image x:Name="ImgA" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
         <Image x:Name="ImgB" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
 
+        <!-- Video element (no controls on fullscreen) -->
+        <MediaElement x:Name="FullscreenVideo" Visibility="Collapsed" Stretch="Uniform" 
+                      LoadedBehavior="Manual" UnloadedBehavior="Manual" 
+                      ScrubbingEnabled="True" />
+
         <!-- Black overlay used by Black button -->
         <Rectangle x:Name="BlackOverlay" Fill="Black" Visibility="Collapsed" />
     </Grid>

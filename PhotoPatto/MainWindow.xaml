@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:PhotoPatto"
         mc:Ignorable="d"
         Title="PhotoPatto" Height="700" Width="1100" MinHeight="480" MinWidth="800"
-        Background="#F5F5F5">
+        Background="#F5F5F5"
+        Loaded="MainWindow_Loaded">
     <Window.Resources>
         <!-- Modern Button Style -->
         <Style x:Key="ModernButton" TargetType="Button">
@@ -212,18 +213,16 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!-- toolbar on top of preview pane: 3 rows -->
+                    <!-- toolbar on top: 3 rows -->
                     <StackPanel Grid.Row="0" Orientation="Vertical" HorizontalAlignment="Left" Margin="0,0,0,6">
                         <!-- Row 1: Display selector and Show button -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,4">
                             <TextBlock VerticalAlignment="Center" Text="出力先:" Margin="0,0,4,0" />
                             <ComboBox x:Name="ComboMonitor" Width="200" Margin="0,0,6,0" Style="{StaticResource ModernComboBox}" />
-                            <ToggleButton x:Name="BtnShow" Content="Show" Width="100" BorderThickness="3" BorderBrush="#666666" FontWeight="Bold" Style="{StaticResource ModernToggleButton}" />
+                            <ToggleButton x:Name="BtnShow" Content="Show" Width="100" BorderThickness="3" BorderBrush="#666666" FontWeight="Bold" Style="{StaticResource ModernToggleButton}" IsChecked="True" />
                         </StackPanel>
                         <!-- Row 2: Rotation and Black -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,4">
@@ -239,16 +238,52 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <TextBlock Grid.Row="1" Text="選択画像プレビュー" FontWeight="Bold" Margin="0,0,0,6" />
+                    <!-- Preview and controls container - ファイル名、プレビュー、動画コントロールを上詰めで配置 -->
+                    <StackPanel Grid.Row="1" Orientation="Vertical" VerticalAlignment="Top">
+                        <!-- ファイル名をプレビューの直上に配置 -->
+                        <TextBlock x:Name="TxtSelectedFile" Text="ファイル: なし" TextTrimming="CharacterEllipsis" Margin="0,0,0,2" FontSize="11" Foreground="#666" />
 
-                    <Border Grid.Row="2" Background="#1E1E1E" VerticalAlignment="Center" HorizontalAlignment="Stretch" Padding="6" CornerRadius="4">
-                        <Viewbox Stretch="Uniform">
-                            <Image x:Name="PreviewImage" Width="1600" Height="900" Stretch="Uniform" />
-                        </Viewbox>
-                    </Border>
+                        <Border Background="#1E1E1E" HorizontalAlignment="Stretch" Padding="6" CornerRadius="4">
+                            <Grid>
+                                <!-- Image viewer -->
+                                <Viewbox x:Name="ImageViewbox" Stretch="Uniform">
+                                    <Image x:Name="PreviewImage" Width="1600" Height="900" Stretch="Uniform" />
+                                </Viewbox>
+                                <!-- Video viewer (muted for preview) -->
+                                <MediaElement x:Name="PreviewVideo" Visibility="Collapsed" Stretch="Uniform" 
+                                              LoadedBehavior="Manual" UnloadedBehavior="Manual" 
+                                              ScrubbingEnabled="True" IsMuted="True" />
+                            </Grid>
+                        </Border>
 
-                    <!-- ファイル名はプレビュー画像の下に配置 -->
-                    <TextBlock Grid.Row="3" x:Name="TxtSelectedFile" Text="ファイル: なし" TextTrimming="CharacterEllipsis" Margin="4,8,4,0" />
+                        <!-- Video controls panel (only visible for videos) - プレビューの直下 -->
+                        <StackPanel x:Name="VideoControlsPanel" Orientation="Vertical" Visibility="Collapsed" Margin="0,2,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,4">
+                                <ToggleButton x:Name="BtnPlayPause" Width="45" Height="30" Margin="0,0,4,0" Style="{StaticResource ModernToggleButton}" ToolTip="再生/一時停止">
+                                    <Grid>
+                                        <TextBlock x:Name="PlayIcon" Text="&#xF5B0;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                        <TextBlock x:Name="PauseIcon" Text="&#xF8AE;" FontFamily="Segoe MDL2 Assets" FontSize="16" Visibility="Collapsed"/>
+                                    </Grid>
+                                </ToggleButton>
+                                <Button x:Name="BtnStop" Width="45" Height="30" Margin="0,0,4,0" Style="{StaticResource ModernButton}" ToolTip="停止">
+                                    <TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                </Button>
+                                <ToggleButton x:Name="BtnLoop" Width="45" Height="30" Style="{StaticResource ModernToggleButton}" ToolTip="ループ再生">
+                                    <TextBlock Text="&#xE8EE;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                </ToggleButton>
+                            </StackPanel>
+                            <Grid Margin="0,4,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" x:Name="TxtCurrentTime" Text="00:00" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="10" />
+                                <Slider Grid.Column="1" x:Name="VideoSeekBar" Minimum="0" Maximum="100" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" x:Name="TxtTotalTime" Text="00:00" VerticalAlignment="Center" Margin="4,0,0,0" FontSize="10" />
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
                 </Grid>
             </Border>
         </Grid>

@@ -10,6 +10,7 @@ namespace PhotoPatto.Models
         public string FilePath { get; }
         public string FileName => Path.GetFileName(FilePath);
         public DateTime DateModified { get; }
+        public bool IsVideo { get; }
 
         private ImageSource? _thumbnail;
         public ImageSource? Thumbnail
@@ -26,10 +27,11 @@ namespace PhotoPatto.Models
             set { _rotation = value; OnPropertyChanged(nameof(Rotation)); }
         }
 
-        public ImageItem(string filePath, DateTime dateModified)
+        public ImageItem(string filePath, DateTime dateModified, bool isVideo = false)
         {
             FilePath = filePath;
             DateModified = dateModified;
+            IsVideo = isVideo;
             Rotation = 0;
         }
 
